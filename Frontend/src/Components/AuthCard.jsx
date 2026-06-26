@@ -1,7 +1,7 @@
 import React from 'react'
 import { motion } from 'motion/react'
 
-const AuthCard = ({ title, des }) => {
+const AuthCard = ({ title, des, icon }) => {
   return (
     <motion.div
       whileHover={{ y: -12, rotateX: 8, rotateY: -8, scale: 1.05 }}
@@ -27,6 +27,13 @@ const AuthCard = ({ title, des }) => {
         className='relative z-10'
         style={{ transform: "translateZ(30px)" }}
       >
+        {/* Render the icon wrapper if an icon is passed */}
+        {icon && (
+          <span className='text-2xl block mb-2 opacity-90 select-none'>
+            {icon}
+          </span>
+        )}
+
         <h3 className='text-lg font-semibold mb-2'>
           {title}
         </h3>

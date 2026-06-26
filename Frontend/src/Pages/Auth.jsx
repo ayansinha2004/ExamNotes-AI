@@ -14,19 +14,23 @@ const Auth = () => {
   const cards = [
     {
       title: "Exam Notes",
-      des: "Generate exam-ready notes instantly with AI-powered summaries and structured content."
+      des: "Generate exam-ready notes instantly with AI-powered summaries and structured content.",
+      icon: <span className="text-xl block mb-2">📖</span>
     },
     {
       title: "Project Reports",
-      des: "Create professional project reports with proper formatting and clean layouts."
+      des: "Create professional project reports with proper formatting and clean layouts.",
+      icon: <span className="text-xl block mb-2">💼</span>
     },
     {
       title: "Charts & Graphs",
-      des: "Visualize complex concepts and data using AI-generated charts and diagrams."
+      des: "Visualize complex concepts and data using AI-generated charts and diagrams.",
+      icon: <span className="text-xl block mb-2">📊</span>
     },
     {
       title: "PDF Export",
-      des: "Download beautifully formatted PDFs ready for study, revision, or submission."
+      des: "Download beautifully formatted PDFs ready for study, revision, or submission.",
+      icon: <span className="text-xl block mb-2">💾</span>
     }
   ];
 
@@ -116,6 +120,7 @@ const Auth = () => {
               key={index}
               title={card.title}
               des={card.des}
+              icon={card.icon}
             />
           ))}
         </motion.div>
