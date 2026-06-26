@@ -2,19 +2,32 @@ const jwt = require('jsonwebtoken')
 
 const isAuth = async (req, res, next) => {
     try {
-        let token = req.cookies.token
+        const token = req.cookies.token;
+        
         if (!token) {
-            return res.status(400).json({ message: "Token is not found" })
+            // Fixed: Changed status to 401 Unauthorized for unauthenticated clients
+            return res.status(401).json({ message: "Access denied: No token provided" });
         }
-        const verifyToken = await jwt.verify(token, process.env.JWT_SECRET)
-        if (!verifyToken) {
-            return res.status(400).json({ message: "Unauthorized access" })
+
+        // jwt.verify is synchronous by default unless given a callback; no need to await it
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        
+        if (!decoded || !decoded.userId) {
+            return res.status(401).json({ message: "Access denied: Invalid session" });
         }
-        req.userId = verifyToken.userId
-        next()
+
+        req.userId = decoded.userId;
+        next();
     } catch (err) {
-        return res.status(400).json({ "Auth error": err })
+        console.error("JWT Verification Exception:", err.message);
+        
+        // Handle explicit expiration differently so the frontend knows to clear local user state
+        if (err.name === 'TokenExpiredError') {
+            return res.status(401).json({ message: "Session expired, please login again" });
+        }
+        
+        return res.status(401).json({ message: "Authentication failed" });
     }
 }
 
-module.exports = isAuth
+module.exports = isAuth;

@@ -10,7 +10,7 @@ import Pricing from './Pages/Pricing'
 import PaymentSuccess from './Pages/PaymentSuccess'
 import PaymentFailed from './Pages/PaymentFailed'
 
-export const serverUrl = "http://localhost:3000"
+export const serverUrl = import.meta.env.VITE_API_URL;
 
 const App = () => {
   const dispatch = useDispatch()

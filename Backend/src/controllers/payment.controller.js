@@ -12,7 +12,8 @@ const createCreditsOrder = async (req, res) => {
         const userId = req.userId
         const { amount } = req.body
 
-        if (!CREDIT_MAP[amount]) {
+        // Convert key to number explicitly to protect lookup verification
+        if (!CREDIT_MAP[Number(amount)]) {
             return res.status(400).json({ message: "Invalid credit plan" })
         }
 
@@ -26,16 +27,16 @@ const createCreditsOrder = async (req, res) => {
                     price_data: {
                         currency: "inr",
                         product_data: {
-                            name: `${CREDIT_MAP[amount]} Credits`
+                            name: `${CREDIT_MAP[Number(amount)]} Credits`
                         },
-                        unit_amount: amount * 100
+                        unit_amount: Number(amount) * 100 // Stripe accepts amount in cents/paise
                     },
                     quantity: 1
                 }
             ],
             metadata: {
                 userId: userId.toString(),
-                credits: CREDIT_MAP[amount].toString()
+                credits: CREDIT_MAP[Number(amount)].toString()
             }
         })
 
@@ -49,6 +50,7 @@ const createCreditsOrder = async (req, res) => {
 const stripeHook = async (req, res) => {
     const sign = req.headers['stripe-signature']
     let event
+    
     try {
         event = stripe.webhooks.constructEvent(
             req.body,
@@ -59,6 +61,11 @@ const stripeHook = async (req, res) => {
         console.error("Webhook verification failed:", error.message)
         return res.status(400).send(`Webhook Error: ${error.message}`)
     }
+
+    // Acknowledge receipt of the event to Stripe immediately
+    res.status(200).json({ received: true })
+
+    // Process event asynchronously so Stripe isn't left hanging during heavy DB loads
     try {
         if (event.type === 'checkout.session.completed') {
             const session = event.data.object
@@ -66,7 +73,8 @@ const stripeHook = async (req, res) => {
             const creditToAdd = Number(session.metadata.credits)
 
             if (!userId || !creditToAdd) {
-                return res.status(400).json({ message: "Invalid metadata" })
+                console.error("Webhook processing halted: Invalid metadata context")
+                return;
             }
 
             await userModel.findByIdAndUpdate(userId, {
@@ -76,11 +84,9 @@ const stripeHook = async (req, res) => {
 
             console.log(`Successfully credited ${creditToAdd} to user ${userId}`)
         }
-        return res.status(200).json({ received: true })
-
     } catch (error) {
-        console.error("Database updating error in hook:", error)
-        return res.status(500).json({ message: "Internal server handling error" })
+        // Log locally for debugging—Stripe has already received its 200 acknowledgment
+        console.error("Database updating error in hook downstream execution:", error)
     }
 }
 
